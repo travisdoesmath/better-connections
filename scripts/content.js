@@ -6,6 +6,7 @@ let injectionSuccess = false;
 let currentColor = null;
 
 let myDiv = document.createElement('div');
+myDiv.style.margin = '12px'
 
 function injectDiv() {
     let h2Elements = document.querySelectorAll("h2");
@@ -44,6 +45,27 @@ let colors = [
     "rgba(0,0,0,0)"
 ]
 
+const hoverSVG = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+hoverSVG.setAttribute('height', '24px');
+hoverSVG.setAttribute('width', '24px');
+hoverSVG.style.position = "absolute";
+hoverSVG.style.pointerEvents = "none";
+hoverSVG.style.display = "none";
+
+const hoverCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle")
+hoverCircle.setAttribute('cx', 12)
+hoverCircle.setAttribute('cy', 12)
+hoverCircle.setAttribute('r', 8)
+hoverCircle.setAttribute('fill', 'red')
+hoverSVG.appendChild(hoverCircle)
+// hoverSVG.style.display = 'none';
+document.body.appendChild(hoverSVG)
+document.addEventListener('mousemove', e => {
+    hoverSVG.style.top = `${e.pageY - 12}px`
+    hoverSVG.style.left = `${e.pageX - 12}px`
+})
+
+
 for (let i = 0; i < 5; i++) {
     let circle = document.createElementNS("http://www.w3.org/2000/svg", "circle")
     circle.setAttribute('cx', 12 + i * 36)
@@ -52,11 +74,17 @@ for (let i = 0; i < 5; i++) {
     circle.setAttribute('fill', colors[i])
     if (colors[i] == "rgba(0,0,0,0)") {
         circle.setAttribute('stroke', "#888")
+            circle.setAttribute('r', 10)
     } 
     
     circle.addEventListener('mousedown', () => {
         currentColor = colors[i]
-        console.log(currentColor)
+        hoverSVG.style.display = "block";
+        hoverCircle.setAttribute("fill", currentColor);
+        if (currentColor == 'rgba(0, 0, 0, 0)') {
+            hoverCircle.style.stroke = "#888"
+            hoverCircle.style.strokeDasharray = "2 2"
+        }
     }) 
 
     svg.appendChild(circle)
@@ -71,6 +99,7 @@ document.addEventListener('mouseup', e => {
         let elem = e.target.tagName == 'LABEL' ? e.target : e.target.parent;
         if (currentColor !== null) {
             elem.style.border = `solid 4px ${currentColor}`;
+            hoverSVG.style.display = "none";
         } 
     }
     currentColor = null;
