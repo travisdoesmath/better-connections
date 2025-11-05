@@ -123,7 +123,6 @@ for (let i = 0; i < 5; i++) {
 myDiv.appendChild(svg)
 
 document.addEventListener('mouseup', e => {
-    // console.log(e.target)
     if (MODE == 0) {
         if (e.target.tagName == 'LABEL' || (e.target.tagName == 'INPUT' && e.target.parent.tagName == 'LABEL')) {
             let elem = e.target.tagName == 'LABEL' ? e.target : e.target.parent;
@@ -147,4 +146,3 @@ document.addEventListener('keyup', e => {
     overlay.style.opacity = 0;
     MODE = 0;
 })
-
