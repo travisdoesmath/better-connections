@@ -1,0 +1,19 @@
+{
+    "name": "Better Connections",
+    "description": "Adds functionality to the NYT Connections game",
+    "version": "1.0",
+    "manifest_version": 3,
+    "permissions": ["scripting", "activeTab"],
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": "icon.png"
+        },
+  "content_scripts": [
+    {
+      "js": ["scripts/content.js"],
+      "matches": [
+        "https://www.nytimes.com/games/connections/*"
+      ]
+    }
+  ]
+}
