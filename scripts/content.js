@@ -1,4 +1,5 @@
 let COOLDOWN = 100 // in milliseconds. Used to rate-limit attempts to inject code
+let MODE = 0; // 0 = drag color onto label, 1 = apply color to selected
 
 console.log('Running Better Connections Extensions')
 
@@ -16,19 +17,13 @@ function injectDiv() {
         if (elem.innerText == "Create four groups of four!") {
             h2 = elem;
             injectionSuccess = true;
-
-            
-            // myDiv.innerHTML = "this is a test";
-
             h2.insertAdjacentElement("afterend", myDiv)
         }
     })
 
     if (!injectionSuccess) {
-        // console.log('attempting again...')
         setTimeout(injectDiv, COOLDOWN)
     }
-
 }
 
 injectDiv()
@@ -45,6 +40,15 @@ let colors = [
     "rgba(0,0,0,0)"
 ]
 
+let darkColors = [
+    "#895e91",
+    "#8c9bbd",
+    "#758f42",
+    "#c7b258",
+    "#888"
+
+]
+
 const hoverSVG = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 hoverSVG.setAttribute('height', '24px');
 hoverSVG.setAttribute('width', '24px');
@@ -56,15 +60,20 @@ const hoverCircle = document.createElementNS("http://www.w3.org/2000/svg", "circ
 hoverCircle.setAttribute('cx', 12)
 hoverCircle.setAttribute('cy', 12)
 hoverCircle.setAttribute('r', 8)
-hoverCircle.setAttribute('fill', 'red')
 hoverSVG.appendChild(hoverCircle)
-// hoverSVG.style.display = 'none';
 document.body.appendChild(hoverSVG)
 document.addEventListener('mousemove', e => {
     hoverSVG.style.top = `${e.pageY - 12}px`
     hoverSVG.style.left = `${e.pageX - 12}px`
 })
 
+let baseLayer = document.createElementNS("http://www.w3.org/2000/svg", "g")
+let overlay = document.createElementNS("http://www.w3.org/2000/svg", "g")
+overlay.style.opacity = 0;
+overlay.style.pointerEvents = "none";
+
+svg.appendChild(baseLayer)
+svg.appendChild(overlay)
 
 for (let i = 0; i < 5; i++) {
     let circle = document.createElementNS("http://www.w3.org/2000/svg", "circle")
@@ -78,29 +87,64 @@ for (let i = 0; i < 5; i++) {
     } 
     
     circle.addEventListener('mousedown', () => {
-        currentColor = colors[i]
-        hoverSVG.style.display = "block";
-        hoverCircle.setAttribute("fill", currentColor);
-        if (currentColor == 'rgba(0, 0, 0, 0)') {
-            hoverCircle.style.stroke = "#888"
-            hoverCircle.style.strokeDasharray = "2 2"
+        if (MODE == 0) {
+            currentColor = colors[i]
+            hoverSVG.style.display = "block";
+            hoverCircle.setAttribute("fill", currentColor);
+            hoverCircle.setAttribute("stroke", darkColors[i]);
+            if (currentColor == 'rgba(0, 0, 0, 0)') {
+                hoverCircle.style.strokeDasharray = "2 2"
+            }
+        }
+    })
+    
+    circle.addEventListener('click', () => {
+        if (MODE == 1) {
+            currentColor = colors[i]
+            let selected = Array.from(document.querySelectorAll('input:checked')).map(x => x.parentElement)
+            selected.forEach(elem => {
+                elem.style.border = `solid 4px ${currentColor}`;
+            })
+
+            currentColor = null;
         }
     }) 
 
-    svg.appendChild(circle)
-}
+    baseLayer.appendChild(circle)
 
+    let plus = document.createElementNS("http://www.w3.org/2000/svg", "path")
+    let plusPadding = 6
+    plus.setAttribute('d', `M${plusPadding + i * 36} 12 L${24 - plusPadding + i * 36} 12 M ${12 + i * 36} ${plusPadding} L ${12 + i * 36} ${24 - plusPadding}`)
+    plus.setAttribute('stroke', darkColors[i])
+    plus.setAttribute('stroke-width', '4')
+    overlay.appendChild(plus)
+}
 
 myDiv.appendChild(svg)
 
 document.addEventListener('mouseup', e => {
     // console.log(e.target)
-    if (e.target.tagName == 'LABEL' || (e.target.tagName == 'INPUT' && e.target.parent.tagName == 'LABEL')) {
-        let elem = e.target.tagName == 'LABEL' ? e.target : e.target.parent;
-        if (currentColor !== null) {
-            elem.style.border = `solid 4px ${currentColor}`;
-            hoverSVG.style.display = "none";
-        } 
-    }
-    currentColor = null;
+    if (MODE == 0) {
+        if (e.target.tagName == 'LABEL' || (e.target.tagName == 'INPUT' && e.target.parent.tagName == 'LABEL')) {
+            let elem = e.target.tagName == 'LABEL' ? e.target : e.target.parent;
+            if (currentColor !== null) {
+                elem.style.border = `solid 4px ${currentColor}`;
+            } 
+        }
+        hoverSVG.style.display = "none";
+        currentColor = null;
+    } 
 })
+
+document.addEventListener('keydown', e => {
+    if (e.key == 'Shift') {
+        overlay.style.opacity = 1;
+        MODE = 1;
+    }
+})
+
+document.addEventListener('keyup', e => {
+    overlay.style.opacity = 0;
+    MODE = 0;
+})
+
