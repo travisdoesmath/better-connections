@@ -1,7 +1,7 @@
 {
     "name": "Better Connections",
     "description": "An extension to enhance the NYT Connections game experience. (Not affiliated with NYT)",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "manifest_version": 3,
     "permissions": ["scripting", "activeTab"],
     "icons": {
