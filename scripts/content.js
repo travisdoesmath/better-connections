@@ -1,36 +1,6 @@
-let COOLDOWN = 100 // in milliseconds. Used to rate-limit attempts to inject code
-let MODE = 0; // 0 = drag color onto label, 1 = apply color to selected
-
 console.log('Running Better Connections Extensions')
 
-let injectionSuccess = false;
-let currentColor = null;
-
-let myDiv = document.createElement('div');
-myDiv.style.margin = '12px'
-
-function injectDiv() {
-    let h2Elements = document.querySelectorAll("h2");
-    let h2;
-
-    h2Elements.forEach(elem => {
-        if (elem.innerText == "Create four groups of four!") {
-            h2 = elem;
-            injectionSuccess = true;
-            h2.insertAdjacentElement("afterend", myDiv)
-        }
-    })
-
-    if (!injectionSuccess) {
-        setTimeout(injectDiv, COOLDOWN)
-    }
-}
-
-injectDiv()
-
-let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-svg.setAttribute('width', '172px')
-svg.setAttribute('height', '26px')
+let COOLDOWN = 100 // in milliseconds. Used to rate-limit attempts to inject code
 
 let colors = [
     "#ba81c5",
@@ -46,103 +16,94 @@ let darkColors = [
     "#758f42",
     "#c7b258",
     "#888"
-
 ]
 
-const hoverSVG = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-hoverSVG.setAttribute('height', '24px');
-hoverSVG.setAttribute('width', '24px');
-hoverSVG.style.position = "absolute";
-hoverSVG.style.pointerEvents = "none";
-hoverSVG.style.display = "none";
+let injectionSuccess = false;
 
-const hoverCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle")
-hoverCircle.setAttribute('cx', 12)
-hoverCircle.setAttribute('cy', 12)
-hoverCircle.setAttribute('r', 8)
-hoverSVG.appendChild(hoverCircle)
-document.body.appendChild(hoverSVG)
-document.addEventListener('mousemove', e => {
-    hoverSVG.style.top = `${e.pageY - 12}px`
-    hoverSVG.style.left = `${e.pageX - 12}px`
-})
+let draggedElem = null;
 
-let baseLayer = document.createElementNS("http://www.w3.org/2000/svg", "g")
-let overlay = document.createElementNS("http://www.w3.org/2000/svg", "g")
-overlay.style.opacity = 0;
-overlay.style.pointerEvents = "none";
+let myDiv = document.createElement('div');
+myDiv.style.margin = '12px'
+const blankLabel = document.createElement('label')
+let labelClassList = "";
 
-svg.appendChild(baseLayer)
-svg.appendChild(overlay)
-
-for (let i = 0; i < 5; i++) {
-    let circle = document.createElementNS("http://www.w3.org/2000/svg", "circle")
-    circle.setAttribute('cx', 12 + i * 36)
-    circle.setAttribute('cy', 12)
-    circle.setAttribute('r', 12)
-    circle.setAttribute('fill', colors[i])
-    if (colors[i] == "rgba(0,0,0,0)") {
-        circle.setAttribute('stroke', "#888")
-            circle.setAttribute('r', 10)
-    } 
+function injectBlankLabel() {
+    let label = document.querySelector('label');
+    labelClassList = label.classList;
+    let labelParent = label.parentElement;
     
-    circle.addEventListener('mousedown', () => {
-        if (MODE == 0) {
-            currentColor = colors[i]
-            hoverSVG.style.display = "block";
-            hoverCircle.setAttribute("fill", currentColor);
-            hoverCircle.setAttribute("stroke", darkColors[i]);
-            if (currentColor == 'rgba(0, 0, 0, 0)') {
-                hoverCircle.style.strokeDasharray = "2 2"
-            }
-        }
-    })
-    
-    circle.addEventListener('click', () => {
-        if (MODE == 1) {
-            currentColor = colors[i]
-            let selected = Array.from(document.querySelectorAll('input:checked')).map(x => x.parentElement)
-            selected.forEach(elem => {
-                elem.style.border = `solid 4px ${currentColor}`;
-            })
+    blankLabel.style.order = 16;
+    blankLabel.classList = labelClassList;
+    blankLabel.style.backgroundColor = "rgba(0,0,0,0)"
+    blankLabel.style.display = "none"
 
-            currentColor = null;
-        }
-    }) 
-
-    baseLayer.appendChild(circle)
-
-    let plus = document.createElementNS("http://www.w3.org/2000/svg", "path")
-    let plusPadding = 6
-    plus.setAttribute('d', `M${plusPadding + i * 36} 12 L${24 - plusPadding + i * 36} 12 M ${12 + i * 36} ${plusPadding} L ${12 + i * 36} ${24 - plusPadding}`)
-    plus.setAttribute('stroke', darkColors[i])
-    plus.setAttribute('stroke-width', '4')
-    overlay.appendChild(plus)
+    labelParent.append(blankLabel);
 }
 
-myDiv.appendChild(svg)
+function hideShuffleButton() {
+    document.querySelector('button[data-testid=shuffle-btn]').style.display = "none"
+}
 
-document.addEventListener('mouseup', e => {
-    if (MODE == 0) {
-        if (e.target.tagName == 'LABEL' || (e.target.tagName == 'INPUT' && e.target.parent.tagName == 'LABEL')) {
-            let elem = e.target.tagName == 'LABEL' ? e.target : e.target.parent;
-            if (currentColor !== null) {
-                elem.style.border = `solid 4px ${currentColor}`;
-            } 
+function injectDiv() {
+    let h2Elements = document.querySelectorAll("h2");
+    let h2;
+
+    h2Elements.forEach(elem => {
+        if (elem.innerText == "Create four groups of four!") {
+            h2 = elem;
+            injectionSuccess = true;
+            h2.insertAdjacentElement("afterend", myDiv)
         }
-        hoverSVG.style.display = "none";
-        currentColor = null;
-    } 
-})
+    })
 
-document.addEventListener('keydown', e => {
-    if (e.key == 'Shift') {
-        overlay.style.opacity = 1;
-        MODE = 1;
+    if (!injectionSuccess) {
+        setTimeout(injectDiv, COOLDOWN)
+    } else {
+        injectBlankLabel();
+        makeLabelsDraggable();
+        hideShuffleButton();
     }
-})
+}
 
-document.addEventListener('keyup', e => {
-    overlay.style.opacity = 0;
-    MODE = 0;
-})
+function makeLabelsDraggable() {
+
+    document.querySelectorAll('label').forEach((elem, i) => { 
+        elem.style.order = i 
+        elem.style.borderStyle = "solid";
+        elem.style.borderColor = colors[Math.floor(i/4)]
+        elem.style.borderWidth = "0px"
+        elem.setAttribute('draggable', true)
+        elem.addEventListener('drag', e => { 
+            draggedElem = elem
+            elem.style.display = "none";
+            blankLabel.style.order = draggedElem.style.order;
+            blankLabel.style.display = "block";
+        })
+        elem.addEventListener('dragover', e => {
+            e.preventDefault()
+        })
+        elem.addEventListener('drop', e => {
+            console.log("drop", e)
+            const j = +draggedElem.style.order;
+            const k = +elem.style.order;
+            draggedElem.style.order = k;
+            elem.style.order = j;
+            draggedElem.style.display = "block";
+            draggedElem.style.borderColor = colors[Math.floor(k/4)]
+            elem.style.borderColor = colors[Math.floor(j/4)]
+            blankLabel.style.order = 16;
+            blankLabel.style.display = "none";
+        })
+        elem.addEventListener('mouseup', e => {
+            if (e.shiftKey) {
+                if (elem.style.borderWidth == "4px") {
+                    elem.style.borderWidth = "0px"
+                } else {
+                    elem.style.borderWidth = "4px"
+                }
+            }
+        })
+    })
+}
+
+injectDiv()
